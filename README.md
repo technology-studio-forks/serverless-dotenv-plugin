@@ -6,6 +6,12 @@
 
 Preload environment variables into serverless. Use this plugin if you have variables stored in a `.env` file that you want loaded into your serverless yaml config. This will allow you to reference them as `${env:VAR_NAME}` inside your config _and_ it will load them into your lambdas.
 
+**`serverless>=3.0.0` introduces changes that significantly impacts this plugin. I would love your feedback about this on the [discussion thread](https://github.com/neverendingqs/serverless-dotenv-plugin/discussions/155). See the discussion thread or the FAQ below for details on the impact of how env vars are loaded with `serverless>=2.26.0` and `serverless>=3.0.0`.**
+
+## Do you need this plugin?
+
+Changes in `serverless>=3.0.0` means this plugin can no longer preload environment variables into Serverless. You may want to consider an alternative, such as the one outlined in [`serverless-dotenv-example`](https://github.com/neverendingqs/serverless-dotenv-example).
+
 ## Install and Setup
 
 First, install the plugin:
@@ -55,6 +61,9 @@ By default, the plugin looks for the file: `.env`. In most use cases this is all
 ```
 
 When you deploy with `NODE_ENV` set: `NODE_ENV=production sls deploy` the plugin will look for files named `.env`, `.env.production`, `.env.production.local`. If for some reason you can't set NODE_ENV, you could always just pass it in as an option: `sls deploy --env production` or `sls deploy --stage production`. If `NODE_ENV`, `--env` or `--stage` is not set, it will default to `development`.
+
+**DEPRECATION WARNING**: as of `serverless>=3.0.0`, `--env` will not be supported due to changes to the Serverless Framework.
+See FAQ for details.
 
 The precedence between the options is the following:
 `NODE_ENV` **>** `--env` **>** `--stage`
@@ -217,13 +226,50 @@ However, Serverless variables are **not** resolved in the constructor:
 
 This is important for several FAQ items below.
 
-### How has changes to the Serverless Framework over time changed the behaviour of this plugin?
+### How has changes to the Serverless Framework affected when environment variables are loaded?
 
 #### `serverless>=2.26.0`
 
 [serverless/serverless#8987](https://github.com/serverless/serverless/pull/8987) changed the order of when plugins are initialized in relationship to variable resolution as part of a larger initiative outlined in [serverless/serverless#8364](https://github.com/serverless/serverless/issues/8364). Because of this, any env var references inside JavaScript files will now get evaluated too early in the process.
 
-It may be that eventually, any env var references that depend on this plugin may not get resolved because `env` variables get resolved before this plugin is intialized. There is an ongoing discussion at [serverless/serverless#8364 (comment)](https://github.com/serverless/serverless/issues/8364#issuecomment-787178132) about this.
+#### `serverless>=3.0.0`
+
+`env` variables will get resolved before this plugin is initialized. This means `env` variables inside `serverless.yml` can **no longer** rely on this plugin to load them from `dotenv` files. See [serverless/serverless#8364](https://github.com/serverless/serverless/issues/8364) for more details on the changes made to the Serverless Framework variables engine.
+
+The [Serverless Framework has basic `dotenv` support built-in](https://www.serverless.com/framework/docs/environment-variables/). For support with more complicated workflows with `dotenv`, see [`serverless-dotenv-example`](https://github.com/neverendingqs/serverless-dotenv-example) for details.
+
+You can continue to use this plugin to automatically load environment variables into all your functions using `dotenv`.
+
+### How has changes to the Serverless Framework affected configuration options?
+
+See [deprecation code `UNSUPPORTED_CLI_OPTIONS` for more details](https://www.serverless.com/framework/docs/deprecations/#UNSUPPORTED_CLI_OPTIONS).
+This was introduced in [serverless/serverless#9171](https://github.com/serverless/serverless/pull/9171).
+
+#### `serverless>=2.32.0`
+
+Using the `--env` CLI option will now result in the following warning:
+
+```
+Detected unrecognized CLI options: "--env".
+Starting with the next major, Serverless Framework will report them with a thrown error
+More Info: https://www.serverless.com/framework/docs/deprecations/#UNSUPPORTED_CLI_OPTIONS
+```
+
+#### `serverless>=3.0.0`
+
+Using the `--env` CLI option will now result in the following error:
+
+```
+Error:
+Detected unrecognized CLI options: "--env".
+```
+
+### Why do env vars already defined by the system take higher precedence?
+
+The [Serverless Framework has basic `dotenv` support built-in](https://www.serverless.com/framework/docs/environment-variables/). If you are loading variables from `.env` at the project root, it is possible the Serverless Framework preloads that env var before this plugin does.
+
+As well, because of the variables engine changed in `serverless>=2.26.0` (see above), `env` variables can also be resolved before this plugin runs, which means Serverless could take the values already defined in the system before the plugin loads env vars via `dotenv`.
+
 
 ### Why doesn't the `basePath` or `path` options support Serverless variables?
 

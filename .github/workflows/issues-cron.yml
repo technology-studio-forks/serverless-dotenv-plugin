@@ -2,6 +2,7 @@ name: Issues (Cron)
 on:
   schedule:
     - cron: '0 14 * * *'
+  workflow_dispatch:
 
 jobs:
   stale:
@@ -13,4 +14,8 @@ jobs:
           days-before-close: 1
           days-before-stale: 30
           only-labels: 'awaiting response'
+          skip-stale-issue-message: true
+          skip-stale-pr-message: true
           stale-issue-label: stale
+          stale-issue-message: 'Marking issue as stale.'  # Required even if 'skip-stale-issue-message' is true
+          stale-pr-message: 'Marking issue as stale.'     # Required even if 'skip-stale-issue-message' is true
