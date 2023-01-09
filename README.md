@@ -113,6 +113,10 @@ custom:
     # if set, uses provided dotenv parser function instead of built-in function
     dotenvParser: dotenv.config.js
 
+    # default: false
+    # this option allows ignore NODE_ENV variable in .env files resolution and leaves fallback to `--env`, or `--stage`
+    ignoreNodeEnv: true
+
     # default: adds all env variables found in your dotenv file(s)
     # this option must be set to `[]` if `provider.environment` is not a literal string
     include:
@@ -158,6 +162,9 @@ custom:
     * `paths`: all the dotenv files discovered by the plugin, ordered by precedence (see `Automatic ENV File Resolution` above for details)
   * This function must return a single object, where each key/value pair represents the env var name and value.
   * By default, this uses the built-in parser, which calls `dotenv` followed by `dotenv-expand` for each file.
+
+* ignoreNodeEnv true|false
+  * Allows us to ignore NODE_ENV environment variable in .env files resolution. This is desired when `--stage` represent more the deployment settings and NODE_ENV is used to set kind of optimisation settings, so combination of both are required for the setup. 
 
 * include (list or `'*'`) (default: `'*'`)
   * All env vars found in your file will be injected into your lambda functions.
